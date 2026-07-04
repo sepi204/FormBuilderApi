@@ -1,0 +1,7 @@
+<Solution>
+  <Folder Name="/src/">
+    <Project Path="src/FormBuilder.Api/FormBuilder.Api.csproj" />
+    <Project Path="src/FormBuilder.Domain/FormBuilder.Domain.csproj" />
+    <Project Path="src/FormBuilder.Infrastructure/FormBuilder.Infrastructure.csproj" />
+  </Folder>
+</Solution>
