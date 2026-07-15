@@ -1,0 +1,24 @@
+@YekAbr.Api_HostAddress = http://localhost:5216
+
+### Register
+POST {{YekAbr.Api_HostAddress}}/api/auth/register
+Content-Type: application/json
+
+{
+  "username": "demo",
+  "password": "password123"
+}
+
+### Login
+# @name login
+POST {{YekAbr.Api_HostAddress}}/api/auth/login
+Content-Type: application/json
+
+{
+  "username": "demo",
+  "password": "password123"
+}
+
+### Me (requires JWT)
+GET {{YekAbr.Api_HostAddress}}/api/auth/me
+Authorization: Bearer {{login.response.body.token}}

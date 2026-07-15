@@ -7,11 +7,11 @@ This phase implements only the authentication foundation (register, login, and a
 ## Solution Structure
 
 ```
-FormBuilder.sln
+YekAbr.sln
 src/
-  FormBuilder.Api/              # Web API, controllers, DTOs, JWT/Swagger setup
-  FormBuilder.Domain/           # Domain entities
-  FormBuilder.Infrastructure/   # EF Core, auth services, JWT token generation
+  YekAbr.Api/              # Web API, controllers, DTOs, JWT/Swagger setup
+  YekAbr.Domain/           # Domain entities
+  YekAbr.Infrastructure/   # EF Core, auth services, JWT token generation
 ```
 
 ## Prerequisites
@@ -21,7 +21,7 @@ src/
 
 ## Configuration
 
-Update `src/FormBuilder.Api/appsettings.json` if needed:
+Update `src/YekAbr.Api/appsettings.json` if needed:
 
 - `ConnectionStrings:DefaultConnection` — SQL Server connection string
 - `Jwt:Issuer`, `Jwt:Audience`, `Jwt:SecretKey`, `Jwt:ExpirationMinutes` — JWT settings
@@ -43,13 +43,13 @@ dotnet build
 ### Apply database migration
 
 ```powershell
-dotnet ef database update --project src/FormBuilder.Infrastructure --startup-project src/FormBuilder.Api
+dotnet ef database update --project src/YekAbr.Infrastructure --startup-project src/YekAbr.Api
 ```
 
 ### Run the API
 
 ```powershell
-dotnet run --project src/FormBuilder.Api
+dotnet run --project src/YekAbr.Api
 ```
 
 Swagger UI is available in Development at:
