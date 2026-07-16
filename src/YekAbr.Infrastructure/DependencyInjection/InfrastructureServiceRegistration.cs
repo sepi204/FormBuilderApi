@@ -10,6 +10,7 @@ using YekAbr.Domain.Interfaces;
 using YekAbr.Infrastructure.Cloud;
 using YekAbr.Infrastructure.Cloud.Dropbox;
 using YekAbr.Infrastructure.Cloud.GoogleDrive;
+using YekAbr.Infrastructure.Cloud.Transfers;
 using YekAbr.Infrastructure.Identity;
 using YekAbr.Infrastructure.Persistence;
 using YekAbr.Infrastructure.Repositories;
@@ -101,6 +102,11 @@ public static class InfrastructureServiceRegistration
         services.AddScoped<ICloudAccountCredentialService, CloudAccountCredentialService>();
         services.AddScoped<ICloudFileService, CloudFileService>();
 
+        services.AddScoped<ICloudTransferService, CloudTransferService>();
+        services.AddScoped<ICloudTransferExecutor, CloudTransferExecutor>();
+        services.AddSingleton<ICloudTransferJobQueue, ChannelCloudTransferJobQueue>();
+        services.AddHostedService<CloudTransferProcessorHostedService>();
+
         services.AddScoped<IValidator<RegisterRequest>, RegisterRequestValidator>();
         services.AddScoped<IValidator<LoginRequest>, LoginRequestValidator>();
         services.AddScoped<IValidator<RefreshTokenRequest>, RefreshTokenRequestValidator>();
@@ -109,6 +115,7 @@ public static class InfrastructureServiceRegistration
         services.AddScoped<IValidator<CreateCloudFolderRequest>, CreateCloudFolderRequestValidator>();
         services.AddScoped<IValidator<MoveCloudItemRequest>, MoveCloudItemRequestValidator>();
         services.AddScoped<IValidator<RenameCloudItemRequest>, RenameCloudItemRequestValidator>();
+        services.AddScoped<IValidator<CreateCloudTransferJobRequest>, CreateCloudTransferJobRequestValidator>();
 
         return services;
     }

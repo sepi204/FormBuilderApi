@@ -1,23 +1,24 @@
 using YekAbr.Domain.Enums;
 
-namespace YekAbr.Domain.Entities;
+namespace YekAbr.Services.DTOs.Cloud;
 
-public sealed class CloudTransferJob
+public sealed class CloudTransferJobDto
 {
     public Guid Id { get; set; }
-
-    /// <summary>
-    /// Matches ASP.NET Identity AppUser.Id (string).
-    /// </summary>
-    public string UserId { get; set; } = string.Empty;
-
-    public Guid SourceConnectedCloudAccountId { get; set; }
-    public Guid DestinationConnectedCloudAccountId { get; set; }
+    public CloudTransferStatus Status { get; set; }
+    public string StatusDisplayName { get; set; } = string.Empty;
+    public Guid SourceConnectedAccountId { get; set; }
+    public Guid DestinationConnectedAccountId { get; set; }
+    public string? SourceAccountDisplayName { get; set; }
+    public string? DestinationAccountDisplayName { get; set; }
+    public CloudProviderType? SourceProvider { get; set; }
+    public CloudProviderType? DestinationProvider { get; set; }
+    public string? SourceProviderName { get; set; }
+    public string? DestinationProviderName { get; set; }
     public string SourceItemId { get; set; } = string.Empty;
     public string SourceItemName { get; set; } = string.Empty;
     public CloudItemType SourceItemType { get; set; }
     public string? DestinationParentFolderId { get; set; }
-    public CloudTransferStatus Status { get; set; } = CloudTransferStatus.Pending;
     public int ProgressPercentage { get; set; }
     public int TotalItems { get; set; }
     public int ProcessedItems { get; set; }
@@ -28,8 +29,5 @@ public sealed class CloudTransferJob
     public DateTime? UpdatedAtUtc { get; set; }
     public DateTime? StartedAtUtc { get; set; }
     public DateTime? CompletedAtUtc { get; set; }
-    public DateTime? CancellationRequestedAtUtc { get; set; }
-
-    public ConnectedCloudAccount? SourceConnectedCloudAccount { get; set; }
-    public ConnectedCloudAccount? DestinationConnectedCloudAccount { get; set; }
+    public bool IsCancellationRequested { get; set; }
 }

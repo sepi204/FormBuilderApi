@@ -44,6 +44,12 @@ public sealed class CloudTransferJobConfiguration : IEntityTypeConfiguration<Clo
         builder.Property(x => x.ProgressPercentage)
             .IsRequired();
 
+        builder.Property(x => x.TotalItems)
+            .IsRequired();
+
+        builder.Property(x => x.ProcessedItems)
+            .IsRequired();
+
         builder.Property(x => x.FailureReason)
             .HasMaxLength(2000);
 
@@ -52,6 +58,7 @@ public sealed class CloudTransferJobConfiguration : IEntityTypeConfiguration<Clo
 
         builder.HasIndex(x => x.UserId);
         builder.HasIndex(x => x.Status);
+        builder.HasIndex(x => new { x.Status, x.CreatedAtUtc });
         builder.HasIndex(x => x.SourceConnectedCloudAccountId);
         builder.HasIndex(x => x.DestinationConnectedCloudAccountId);
 
