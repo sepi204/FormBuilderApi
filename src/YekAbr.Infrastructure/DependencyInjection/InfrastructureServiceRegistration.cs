@@ -7,6 +7,7 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.IdentityModel.Tokens;
 using YekAbr.Domain.Interfaces;
+using YekAbr.Infrastructure.Cloud;
 using YekAbr.Infrastructure.Identity;
 using YekAbr.Infrastructure.Persistence;
 using YekAbr.Infrastructure.Repositories;
@@ -14,6 +15,7 @@ using YekAbr.Infrastructure.Security;
 using YekAbr.Infrastructure.Services.Auth;
 using YekAbr.Services.DTOs.Auth;
 using YekAbr.Services.Interfaces.Auth;
+using YekAbr.Services.Interfaces.Cloud;
 using YekAbr.Services.Validators.Auth;
 
 namespace YekAbr.Infrastructure.DependencyInjection;
@@ -23,6 +25,9 @@ public static class InfrastructureServiceRegistration
     public static IServiceCollection AddInfrastructureServices(this IServiceCollection services, IConfiguration configuration)
     {
         services.Configure<JwtOptions>(configuration.GetSection(JwtOptions.SectionName));
+        services.Configure<CloudTokenEncryptionOptions>(configuration.GetSection(CloudTokenEncryptionOptions.SectionName));
+
+        services.AddDataProtection();
 
         services.AddDbContext<ApplicationDbContext>(options =>
             options.UseNpgsql(configuration.GetConnectionString("DefaultConnection")));
@@ -72,6 +77,10 @@ public static class InfrastructureServiceRegistration
         services.AddScoped<IJwtTokenService, JwtTokenService>();
         services.AddScoped<ICurrentUserService, CurrentUserService>();
         services.AddScoped<YekAbr.Services.Interfaces.Auth.IAuthService, AuthService>();
+
+        services.AddSingleton<ICloudTokenEncryptionService, CloudTokenEncryptionService>();
+        services.AddScoped<ICloudProviderClientFactory, CloudProviderClientFactory>();
+        // Provider clients (Google Drive, Dropbox, MEGA) will be registered as ICloudProviderClient in later phases.
 
         services.AddScoped<IValidator<RegisterRequest>, RegisterRequestValidator>();
         services.AddScoped<IValidator<LoginRequest>, LoginRequestValidator>();
