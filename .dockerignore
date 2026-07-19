@@ -1,0 +1,10 @@
+**/bin/
+**/obj/
+.git/
+.vs/
+.vscode/
+Dockerfile
+compose.yaml
+README.md
+*.user
+*.suo

@@ -1,0 +1,61 @@
+services:
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: yekabr-api
+    ports:
+      - "8080:8080"
+    environment:
+      ASPNETCORE_ENVIRONMENT: Development
+      ASPNETCORE_URLS: http://+:8080
+
+      ConnectionStrings__DefaultConnection: Host=postgres;Port=5432;Database=yekabr_auth_db;Username=postgres;Password=postgres
+
+      Jwt__Issuer: YekAbr.Api
+      Jwt__Audience: YekAbr.Clients
+      Jwt__Key: ChangeThisToAStrongSecretKeyWithAtLeast32Characters
+      Jwt__AccessTokenMinutes: 15
+      Jwt__RefreshTokenDays: 7
+
+      CloudTokenEncryption__Purpose: YekAbr.CloudProviderTokens.v1
+
+      GoogleDrive__ClientId: YOUR_GOOGLE_CLIENT_ID
+      GoogleDrive__ClientSecret: YOUR_GOOGLE_CLIENT_SECRET
+      GoogleDrive__RedirectUri: http://localhost:8080/api/cloud/google/callback
+      GoogleDrive__FrontendSuccessRedirectUrl: http://localhost:3000/cloud/connect/success
+      GoogleDrive__FrontendFailureRedirectUrl: http://localhost:3000/cloud/connect/failure
+      GoogleDrive__OAuthStateLifetimeMinutes: 10
+
+      Dropbox__ClientId: YOUR_DROPBOX_APP_KEY
+      Dropbox__ClientSecret: YOUR_DROPBOX_APP_SECRET
+      Dropbox__RedirectUri: http://localhost:8080/api/cloud/dropbox/callback
+      Dropbox__FrontendSuccessRedirectUrl: http://localhost:3000/cloud/connect/success
+      Dropbox__FrontendFailureRedirectUrl: http://localhost:3000/cloud/connect/failure
+      Dropbox__OAuthStateLifetimeMinutes: 10
+
+      Mega__RequestTimeoutSeconds: 120
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  postgres:
+    image: postgres:16
+    container_name: yekabr-postgres
+    restart: always
+    environment:
+      POSTGRES_DB: yekabr_auth_db
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+    ports:
+      - "5432:5432"
+    volumes:
+      - yekabr_pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d yekabr_auth_db"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+volumes:
+  yekabr_pgdata:
