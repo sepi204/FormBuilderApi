@@ -51,5 +51,11 @@ public sealed class UploadedFileMetadata
     public string? ThumbnailUrl { get; set; }
     public DateTime UploadedAtUtc { get; set; }
     public DateTime? LastModifiedAtUtc { get; set; }
+
+    /// <summary>
+    /// Last time this metadata row was refreshed from an external provider sync.
+    /// </summary>
+    public DateTime? LastSyncedAtUtc { get; set; }
+
     public bool IsDeleted { get; set; }
 }

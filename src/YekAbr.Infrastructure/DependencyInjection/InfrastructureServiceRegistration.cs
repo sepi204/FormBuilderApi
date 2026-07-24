@@ -21,18 +21,24 @@ using YekAbr.Infrastructure.Services.Auth;
 using YekAbr.Infrastructure.Services.Cloud;
 using YekAbr.Infrastructure.Services.Dashboard;
 using YekAbr.Infrastructure.Services.Profile;
+using YekAbr.Infrastructure.Services.Sync;
+using YekAbr.Infrastructure.Services.Transfers;
 using YekAbr.Services.DTOs.Auth;
 using YekAbr.Services.DTOs.Cloud;
 using YekAbr.Services.DTOs.Dashboard;
 using YekAbr.Services.DTOs.Profile;
+using YekAbr.Services.DTOs.Transfers;
 using YekAbr.Services.Interfaces.Auth;
 using YekAbr.Services.Interfaces.Cloud;
 using YekAbr.Services.Interfaces.Dashboard;
 using YekAbr.Services.Interfaces.Profile;
+using YekAbr.Services.Interfaces.Sync;
+using YekAbr.Services.Interfaces.Transfers;
 using YekAbr.Services.Validators.Auth;
 using YekAbr.Services.Validators.Cloud;
 using YekAbr.Services.Validators.Dashboard;
 using YekAbr.Services.Validators.Profile;
+using YekAbr.Services.Validators.Transfers;
 
 namespace YekAbr.Infrastructure.DependencyInjection;
 
@@ -96,6 +102,7 @@ public static class InfrastructureServiceRegistration
         services.AddScoped<IConnectedCloudAccountRepository, ConnectedCloudAccountRepository>();
         services.AddScoped<ICloudTransferJobRepository, CloudTransferJobRepository>();
         services.AddScoped<IUploadedFileMetadataRepository, UploadedFileMetadataRepository>();
+        services.AddScoped<IProviderSyncOperationRepository, ProviderSyncOperationRepository>();
         services.AddScoped<IJwtTokenService, JwtTokenService>();
         services.AddScoped<ICurrentUserService, CurrentUserService>();
         services.AddScoped<YekAbr.Services.Interfaces.Auth.IAuthService, AuthService>();
@@ -103,6 +110,9 @@ public static class InfrastructureServiceRegistration
         services.AddScoped<IProfileImageStorageService, LocalProfileImageStorageService>();
         services.AddScoped<IPublicUrlBuilder, PublicUrlBuilder>();
         services.AddScoped<IDashboardService, DashboardService>();
+        services.AddScoped<ICloudMetadataSyncService, CloudMetadataSyncService>();
+        services.AddScoped<IProviderSyncService, ProviderSyncService>();
+        services.AddScoped<IProviderSyncExecutor, ProviderSyncExecutor>();
 
         services.AddSingleton<ICloudTokenEncryptionService, CloudTokenEncryptionService>();
         services.AddSingleton<ICloudOAuthStateStore, MemoryCloudOAuthStateStore>();
@@ -126,6 +136,8 @@ public static class InfrastructureServiceRegistration
         services.AddScoped<ICloudTransferExecutor, CloudTransferExecutor>();
         services.AddSingleton<ICloudTransferJobQueue, ChannelCloudTransferJobQueue>();
         services.AddHostedService<CloudTransferProcessorHostedService>();
+        services.AddSingleton<IProviderSyncOperationQueue, ChannelProviderSyncOperationQueue>();
+        services.AddHostedService<ProviderSyncProcessorHostedService>();
 
         services.AddScoped<IValidator<RegisterRequest>, RegisterRequestValidator>();
         services.AddScoped<IValidator<LoginRequest>, LoginRequestValidator>();
@@ -139,6 +151,7 @@ public static class InfrastructureServiceRegistration
         services.AddScoped<IValidator<ConnectMegaAccountRequest>, ConnectMegaAccountRequestValidator>();
         services.AddScoped<IValidator<UpdateProfileRequest>, UpdateProfileRequestValidator>();
         services.AddScoped<IValidator<GetUserFilesRequest>, GetUserFilesRequestValidator>();
+        services.AddScoped<IValidator<StartProviderSyncRequest>, StartProviderSyncRequestValidator>();
 
         return services;
     }

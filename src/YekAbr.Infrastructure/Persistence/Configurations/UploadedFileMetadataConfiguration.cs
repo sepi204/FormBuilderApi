@@ -64,7 +64,12 @@ public sealed class UploadedFileMetadataConfiguration : IEntityTypeConfiguration
         builder.HasIndex(x => x.UploadedAtUtc);
         builder.HasIndex(x => x.ProviderType);
         builder.HasIndex(x => new { x.UserId, x.IsDeleted, x.UploadedAtUtc });
-        builder.HasIndex(x => new { x.UserId, x.ConnectedCloudAccountId, x.ProviderFileId });
+        builder.HasIndex(x => new { x.ConnectedCloudAccountId, x.ProviderFileId });
+
+        // Prevent duplicate active metadata rows for the same provider file per user/account.
+        builder.HasIndex(x => new { x.UserId, x.ConnectedCloudAccountId, x.ProviderFileId })
+            .IsUnique()
+            .HasFilter("\"IsDeleted\" = FALSE");
 
         builder.HasOne<AppUser>()
             .WithMany()

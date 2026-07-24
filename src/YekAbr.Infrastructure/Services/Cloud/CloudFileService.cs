@@ -400,41 +400,50 @@ public sealed class CloudFileService : ICloudFileService
         Domain.Models.CloudItem uploaded,
         CancellationToken cancellationToken)
     {
-        var originalFileName = request.FileName.Trim();
-        var fileName = string.IsNullOrWhiteSpace(uploaded.Name) ? originalFileName : uploaded.Name.Trim();
-        var extension = Path.GetExtension(fileName);
-        if (string.IsNullOrWhiteSpace(extension))
+        var existing = await _uploadedFileMetadataRepository.GetByProviderFileAsync(
+            userId,
+            account.Id,
+            uploaded.Id,
+            includeDeleted: true,
+            cancellationToken);
+
+        if (existing is null)
         {
-            extension = Path.GetExtension(originalFileName);
+            var metadata = UploadedFileMetadataMapper.CreateFromCloudItem(
+                userId,
+                account,
+                uploaded,
+                request.FileName,
+                request.ContentType);
+
+            if (request.ContentLength.HasValue && metadata.Size <= 0)
+            {
+                metadata.Size = Math.Max(0, request.ContentLength.Value);
+            }
+
+            await _uploadedFileMetadataRepository.AddAsync(metadata, cancellationToken);
+        }
+        else
+        {
+            UploadedFileMetadataMapper.ApplyCloudItemUpdates(existing, uploaded, account);
+            if (!string.IsNullOrWhiteSpace(request.FileName))
+            {
+                existing.OriginalFileName = request.FileName.Trim();
+            }
+
+            if (!string.IsNullOrWhiteSpace(request.ContentType))
+            {
+                existing.ContentType = request.ContentType;
+            }
+
+            if (request.ContentLength.HasValue && existing.Size <= 0)
+            {
+                existing.Size = Math.Max(0, request.ContentLength.Value);
+            }
+
+            _uploadedFileMetadataRepository.Update(existing);
         }
 
-        var size = uploaded.Size
-            ?? request.ContentLength
-            ?? 0;
-
-        var metadata = new UploadedFileMetadata
-        {
-            Id = Guid.NewGuid(),
-            UserId = userId,
-            ConnectedCloudAccountId = account.Id,
-            FileName = fileName,
-            OriginalFileName = originalFileName,
-            Extension = extension.TrimStart('.').ToLowerInvariant(),
-            ContentType = string.IsNullOrWhiteSpace(request.ContentType)
-                ? uploaded.MimeType
-                : request.ContentType,
-            Size = size < 0 ? 0 : size,
-            ProviderType = account.Provider,
-            ProviderFileId = uploaded.Id,
-            ProviderPath = uploaded.FullPath,
-            DownloadUrl = $"/api/cloud/accounts/{account.Id}/files/{Uri.EscapeDataString(uploaded.Id)}/download",
-            ThumbnailUrl = null,
-            UploadedAtUtc = DateTime.UtcNow,
-            LastModifiedAtUtc = uploaded.ModifiedAtUtc?.ToUniversalTime() ?? DateTime.UtcNow,
-            IsDeleted = false
-        };
-
-        await _uploadedFileMetadataRepository.AddAsync(metadata, cancellationToken);
         await _uploadedFileMetadataRepository.SaveChangesAsync(cancellationToken);
     }
 

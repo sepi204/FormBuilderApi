@@ -19,6 +19,43 @@ public sealed class UploadedFileMetadataRepository : IUploadedFileMetadataReposi
         await _dbContext.UploadedFileMetadata.AddAsync(entity, cancellationToken);
     }
 
+    public void Update(UploadedFileMetadata entity)
+    {
+        _dbContext.UploadedFileMetadata.Update(entity);
+    }
+
+    public async Task<UploadedFileMetadata?> GetByProviderFileAsync(
+        string userId,
+        Guid connectedCloudAccountId,
+        string providerFileId,
+        bool includeDeleted = false,
+        CancellationToken cancellationToken = default)
+    {
+        if (string.IsNullOrWhiteSpace(providerFileId))
+        {
+            return null;
+        }
+
+        var query = _dbContext.UploadedFileMetadata.Where(x =>
+            x.UserId == userId
+            && x.ConnectedCloudAccountId == connectedCloudAccountId
+            && x.ProviderFileId == providerFileId);
+
+        if (!includeDeleted)
+        {
+            return await query
+                .Where(x => !x.IsDeleted)
+                .OrderByDescending(x => x.UploadedAtUtc)
+                .FirstOrDefaultAsync(cancellationToken);
+        }
+
+        // Prefer active row; otherwise take the newest soft-deleted row for reactivation.
+        return await query
+            .OrderBy(x => x.IsDeleted)
+            .ThenByDescending(x => x.UploadedAtUtc)
+            .FirstOrDefaultAsync(cancellationToken);
+    }
+
     public async Task<(IReadOnlyList<UploadedFileMetadata> Items, int TotalCount)> GetByUserIdPagedAsync(
         string userId,
         int page,

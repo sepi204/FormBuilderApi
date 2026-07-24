@@ -16,6 +16,7 @@ public sealed class ApplicationDbContext : IdentityDbContext<AppUser>
     public DbSet<ConnectedCloudAccount> ConnectedCloudAccounts => Set<ConnectedCloudAccount>();
     public DbSet<CloudTransferJob> CloudTransferJobs => Set<CloudTransferJob>();
     public DbSet<UploadedFileMetadata> UploadedFileMetadata => Set<UploadedFileMetadata>();
+    public DbSet<ProviderSyncOperation> ProviderSyncOperations => Set<ProviderSyncOperation>();
 
     protected override void OnModelCreating(ModelBuilder builder)
     {

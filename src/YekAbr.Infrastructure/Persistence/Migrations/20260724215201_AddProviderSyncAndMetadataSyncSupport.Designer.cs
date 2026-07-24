@@ -2,6 +2,7 @@
 using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 using YekAbr.Infrastructure.Persistence;
@@ -11,9 +12,11 @@ using YekAbr.Infrastructure.Persistence;
 namespace YekAbr.Infrastructure.Persistence.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    partial class ApplicationDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260724215201_AddProviderSyncAndMetadataSyncSupport")]
+    partial class AddProviderSyncAndMetadataSyncSupport
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -486,13 +489,13 @@ namespace YekAbr.Infrastructure.Persistence.Migrations
 
                     b.HasKey("Id");
 
+                    b.HasIndex("ConnectedCloudAccountId");
+
                     b.HasIndex("ProviderType");
 
                     b.HasIndex("UploadedAtUtc");
 
                     b.HasIndex("UserId");
-
-                    b.HasIndex("ConnectedCloudAccountId", "ProviderFileId");
 
                     b.HasIndex("UserId", "ConnectedCloudAccountId", "ProviderFileId")
                         .IsUnique()
