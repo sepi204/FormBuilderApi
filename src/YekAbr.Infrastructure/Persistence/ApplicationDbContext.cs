@@ -15,6 +15,7 @@ public sealed class ApplicationDbContext : IdentityDbContext<AppUser>
     public DbSet<RefreshToken> RefreshTokens => Set<RefreshToken>();
     public DbSet<ConnectedCloudAccount> ConnectedCloudAccounts => Set<ConnectedCloudAccount>();
     public DbSet<CloudTransferJob> CloudTransferJobs => Set<CloudTransferJob>();
+    public DbSet<UploadedFileMetadata> UploadedFileMetadata => Set<UploadedFileMetadata>();
 
     protected override void OnModelCreating(ModelBuilder builder)
     {

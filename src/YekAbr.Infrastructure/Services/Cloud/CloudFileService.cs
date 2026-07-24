@@ -1,5 +1,7 @@
 using FluentValidation;
 using Microsoft.Extensions.Logging;
+using YekAbr.Domain.Entities;
+using YekAbr.Domain.Interfaces;
 using YekAbr.Services.Common.Responses;
 using YekAbr.Services.DTOs.Cloud;
 using YekAbr.Services.Interfaces.Cloud;
@@ -11,6 +13,7 @@ public sealed class CloudFileService : ICloudFileService
 {
     private readonly ICloudAccountCredentialService _credentialService;
     private readonly ICloudProviderClientFactory _providerFactory;
+    private readonly IUploadedFileMetadataRepository _uploadedFileMetadataRepository;
     private readonly IValidator<ListCloudItemsRequest> _listValidator;
     private readonly IValidator<CreateCloudFolderRequest> _createFolderValidator;
     private readonly IValidator<MoveCloudItemRequest> _moveValidator;
@@ -20,6 +23,7 @@ public sealed class CloudFileService : ICloudFileService
     public CloudFileService(
         ICloudAccountCredentialService credentialService,
         ICloudProviderClientFactory providerFactory,
+        IUploadedFileMetadataRepository uploadedFileMetadataRepository,
         IValidator<ListCloudItemsRequest> listValidator,
         IValidator<CreateCloudFolderRequest> createFolderValidator,
         IValidator<MoveCloudItemRequest> moveValidator,
@@ -28,6 +32,7 @@ public sealed class CloudFileService : ICloudFileService
     {
         _credentialService = credentialService;
         _providerFactory = providerFactory;
+        _uploadedFileMetadataRepository = uploadedFileMetadataRepository;
         _listValidator = listValidator;
         _createFolderValidator = createFolderValidator;
         _moveValidator = moveValidator;
@@ -143,6 +148,26 @@ public sealed class CloudFileService : ICloudFileService
         {
             request.ParentFolderId = NormalizeParentId(request.ParentFolderId, access.Account!.RootFolderId);
             var uploaded = await access.FileProvider!.UploadFileAsync(access.AccessToken!, request, cancellationToken);
+
+            try
+            {
+                await PersistUploadMetadataAsync(
+                    userId,
+                    access.Account,
+                    request,
+                    uploaded,
+                    cancellationToken);
+            }
+            catch (Exception metadataException)
+            {
+                // Cloud upload already succeeded; do not fail the API response if local metadata persistence fails.
+                _logger.LogError(
+                    metadataException,
+                    "Cloud upload succeeded for account {AccountId} but metadata persistence failed for provider file {ProviderFileId}.",
+                    accountId,
+                    uploaded.Id);
+            }
+
             return Result<CloudItemDto>.Succeeded(CloudItemDto.FromDomain(uploaded), "فایل با موفقیت آپلود شد.");
         }
         catch (InvalidOperationException exception)
@@ -211,6 +236,25 @@ public sealed class CloudFileService : ICloudFileService
         try
         {
             await access.FileProvider!.DeleteItemAsync(access.AccessToken!, itemId, cancellationToken);
+
+            try
+            {
+                await _uploadedFileMetadataRepository.SoftDeleteByProviderFileAsync(
+                    userId,
+                    accountId,
+                    itemId,
+                    cancellationToken);
+                await _uploadedFileMetadataRepository.SaveChangesAsync(cancellationToken);
+            }
+            catch (Exception metadataException)
+            {
+                _logger.LogError(
+                    metadataException,
+                    "Cloud delete succeeded for item {ItemId} on account {AccountId}, but metadata soft-delete failed.",
+                    itemId,
+                    accountId);
+            }
+
             return Result<object>.Succeeded(new { }, "آیتم با موفقیت حذف شد.");
         }
         catch (InvalidOperationException exception)
@@ -347,6 +391,51 @@ public sealed class CloudFileService : ICloudFileService
             _logger.LogError(exception, "Unexpected failure renaming item {ItemId} for account {AccountId}.", itemId, accountId);
             return Result<CloudItemDto>.Failed("تغییر نام آیتم ناموفق بود.");
         }
+    }
+
+    private async Task PersistUploadMetadataAsync(
+        string userId,
+        ConnectedCloudAccount account,
+        UploadCloudFileRequest request,
+        Domain.Models.CloudItem uploaded,
+        CancellationToken cancellationToken)
+    {
+        var originalFileName = request.FileName.Trim();
+        var fileName = string.IsNullOrWhiteSpace(uploaded.Name) ? originalFileName : uploaded.Name.Trim();
+        var extension = Path.GetExtension(fileName);
+        if (string.IsNullOrWhiteSpace(extension))
+        {
+            extension = Path.GetExtension(originalFileName);
+        }
+
+        var size = uploaded.Size
+            ?? request.ContentLength
+            ?? 0;
+
+        var metadata = new UploadedFileMetadata
+        {
+            Id = Guid.NewGuid(),
+            UserId = userId,
+            ConnectedCloudAccountId = account.Id,
+            FileName = fileName,
+            OriginalFileName = originalFileName,
+            Extension = extension.TrimStart('.').ToLowerInvariant(),
+            ContentType = string.IsNullOrWhiteSpace(request.ContentType)
+                ? uploaded.MimeType
+                : request.ContentType,
+            Size = size < 0 ? 0 : size,
+            ProviderType = account.Provider,
+            ProviderFileId = uploaded.Id,
+            ProviderPath = uploaded.FullPath,
+            DownloadUrl = $"/api/cloud/accounts/{account.Id}/files/{Uri.EscapeDataString(uploaded.Id)}/download",
+            ThumbnailUrl = null,
+            UploadedAtUtc = DateTime.UtcNow,
+            LastModifiedAtUtc = uploaded.ModifiedAtUtc?.ToUniversalTime() ?? DateTime.UtcNow,
+            IsDeleted = false
+        };
+
+        await _uploadedFileMetadataRepository.AddAsync(metadata, cancellationToken);
+        await _uploadedFileMetadataRepository.SaveChangesAsync(cancellationToken);
     }
 
     private async Task<AccessContext> ResolveAccessAsync(

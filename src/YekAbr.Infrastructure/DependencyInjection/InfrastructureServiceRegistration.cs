@@ -19,15 +19,19 @@ using YekAbr.Infrastructure.Security;
 using YekAbr.Infrastructure.Options;
 using YekAbr.Infrastructure.Services.Auth;
 using YekAbr.Infrastructure.Services.Cloud;
+using YekAbr.Infrastructure.Services.Dashboard;
 using YekAbr.Infrastructure.Services.Profile;
 using YekAbr.Services.DTOs.Auth;
 using YekAbr.Services.DTOs.Cloud;
+using YekAbr.Services.DTOs.Dashboard;
 using YekAbr.Services.DTOs.Profile;
 using YekAbr.Services.Interfaces.Auth;
 using YekAbr.Services.Interfaces.Cloud;
+using YekAbr.Services.Interfaces.Dashboard;
 using YekAbr.Services.Interfaces.Profile;
 using YekAbr.Services.Validators.Auth;
 using YekAbr.Services.Validators.Cloud;
+using YekAbr.Services.Validators.Dashboard;
 using YekAbr.Services.Validators.Profile;
 
 namespace YekAbr.Infrastructure.DependencyInjection;
@@ -91,12 +95,14 @@ public static class InfrastructureServiceRegistration
         services.AddScoped<IRefreshTokenRepository, RefreshTokenRepository>();
         services.AddScoped<IConnectedCloudAccountRepository, ConnectedCloudAccountRepository>();
         services.AddScoped<ICloudTransferJobRepository, CloudTransferJobRepository>();
+        services.AddScoped<IUploadedFileMetadataRepository, UploadedFileMetadataRepository>();
         services.AddScoped<IJwtTokenService, JwtTokenService>();
         services.AddScoped<ICurrentUserService, CurrentUserService>();
         services.AddScoped<YekAbr.Services.Interfaces.Auth.IAuthService, AuthService>();
         services.AddScoped<IProfileService, ProfileService>();
         services.AddScoped<IProfileImageStorageService, LocalProfileImageStorageService>();
         services.AddScoped<IPublicUrlBuilder, PublicUrlBuilder>();
+        services.AddScoped<IDashboardService, DashboardService>();
 
         services.AddSingleton<ICloudTokenEncryptionService, CloudTokenEncryptionService>();
         services.AddSingleton<ICloudOAuthStateStore, MemoryCloudOAuthStateStore>();
@@ -132,6 +138,7 @@ public static class InfrastructureServiceRegistration
         services.AddScoped<IValidator<CreateCloudTransferJobRequest>, CreateCloudTransferJobRequestValidator>();
         services.AddScoped<IValidator<ConnectMegaAccountRequest>, ConnectMegaAccountRequestValidator>();
         services.AddScoped<IValidator<UpdateProfileRequest>, UpdateProfileRequestValidator>();
+        services.AddScoped<IValidator<GetUserFilesRequest>, GetUserFilesRequestValidator>();
 
         return services;
     }
